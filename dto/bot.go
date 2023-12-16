@@ -30,8 +30,19 @@ func formatNextPrice(nextPrice int) string {
 }
 
 type MonitoringData struct {
-	VehicleID    int    `json:"vehicle_id"`
 	VehicleName  string `json:"vehicle_name"`
-	ChatID       int    `json:"chat_id"`
+	ChatID       int64  `json:"chat_id"`
 	MinimalCount int    `json:"minimal_count"`
+}
+
+type MonitoringStep int
+
+const (
+	StepSelectVehicle MonitoringStep = iota
+	StepEnterMinimalCount
+)
+
+type AddMonitoringStep struct {
+	Data MonitoringData
+	Step MonitoringStep
 }

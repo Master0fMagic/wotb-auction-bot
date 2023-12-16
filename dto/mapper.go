@@ -9,7 +9,7 @@ func MapResultToVehicleInfo(result Result) VehicleInfo {
 		Level:        result.Entity.RomanLevel,
 		Img:          result.Entity.ImageURL,
 		CurrentCount: result.CurrentCount,
-		Price:        result.CurrentCount,
+		Price:        result.Price.Value,
 	}
 	if result.NextPrice != nil {
 		v.NextPrice = result.NextPrice.Value

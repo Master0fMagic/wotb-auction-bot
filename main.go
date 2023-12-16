@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/Master0fMagic/wotb-auction-bot/bot"
+	"github.com/Master0fMagic/wotb-auction-bot/dto"
 	"github.com/Master0fMagic/wotb-auction-bot/provider"
 	"github.com/Master0fMagic/wotb-auction-bot/storage"
 	"golang.org/x/sync/errgroup"
@@ -22,15 +23,16 @@ func main() {
 
 	errorGroup, ctx := errgroup.WithContext(ctx)
 
-	strg := storage.NewRuntimeMonitoringStorage()
-	provdr := provider.NewHttpActionProvider(apiUrl) // todo move to config
+	monitoringStorage := storage.NewRuntimeMonitoringStorage()
+	flowStorage := storage.NewRuntimeAddMonitoringFlowStorage()
+	actionProvider := provider.NewHttpActionProvider(apiUrl) // todo move to config
 
 	tgBot, err := bot.New(botToken) // todo move to cfg
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	initBot(strg, provdr, tgBot)
+	initBot(monitoringStorage, flowStorage, actionProvider, tgBot)
 	errorGroup.Go(func() error {
 		return tgBot.Run(ctx)
 	})
@@ -44,7 +46,9 @@ func main() {
 	errorGroup.Wait()
 }
 
-func initBot(monitoringStorage storage.MonitoringStorage, dataProvider provider.AuctionDataProvider, tgBot *bot.Bot) {
+func initBot(monitoringStorage storage.MonitoringStorage,
+	flowStorage storage.AddMonitoringFlowStorage,
+	dataProvider provider.AuctionDataProvider, tgBot *bot.Bot) {
 	tgBot.AddHandler(
 		bot.GetCommandNamePredicate("start"),
 		bot.GetStaticTextResponseHandler("welcome to wotb auction bot"),
@@ -57,5 +61,20 @@ func initBot(monitoringStorage storage.MonitoringStorage, dataProvider provider.
 		bot.GetCommandNamePredicate("data_short"),
 		bot.GetDataShortCommandHandler(dataProvider),
 	)
-
+	tgBot.AddHandler(
+		bot.GetCommandNamePredicate("add_monitoring"),
+		bot.GetAddMonitoringCommandHandler(dataProvider, flowStorage),
+	)
+	tgBot.AddHandler(
+		bot.GetCommandNamePredicate("monitoring"),
+		bot.GetMonitoringCommandHandler(monitoringStorage),
+	)
+	tgBot.AddHandler(
+		bot.GetSetVehicleNameFlowCallbackPredicate(flowStorage, dto.StepSelectVehicle),
+		bot.GetAddMonitoringVehicleStepHandler(flowStorage),
+	)
+	tgBot.AddHandler(
+		bot.GetSetVehicleMinimalCountFlowPredicate(flowStorage, dto.StepEnterMinimalCount),
+		bot.GetAddMonitoringMinimalCountStepHandler(flowStorage, monitoringStorage),
+	)
 }

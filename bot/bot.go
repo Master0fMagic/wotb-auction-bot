@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-type HandlerFunc func(tgbotapi.Update) ([]tgbotapi.Chattable, error)
+type HandlerFunc func(tgbotapi.Update, *tgbotapi.BotAPI) error
 type Predicate func(tgbotapi.Update) bool
 
 type messageHandler struct {
@@ -71,26 +71,17 @@ func (b *Bot) Run(ctx context.Context) error {
 			// todo add log for canceling via ctx
 			return nil
 		case update := <-updates:
-			if update.Message == nil { // ignore any non-Message Updates
-				continue
-			}
-
 			b.mtx.RLock()
 			for _, handler := range b.msgHandlers {
 				if !handler.predicate(update) {
 					continue
 				}
 
-				responses, err := handler.handler(update)
+				err := handler.handler(update, b.tgBot)
 				if err != nil {
 					// todo log with error
-					continue
 				}
-
-				if err := b.SendMessages(responses); err != nil {
-					// todo log error
-					continue
-				}
+				break
 			}
 
 			b.mtx.RUnlock()

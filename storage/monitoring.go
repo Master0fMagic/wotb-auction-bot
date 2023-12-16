@@ -8,19 +8,19 @@ import (
 
 type MonitoringStorage interface {
 	Save(ctx context.Context, data dto.MonitoringData) error
-	Remove(ctx context.Context, chatId int, vehicleId int) error
+	Remove(ctx context.Context, chatId int64, vehicleName string) error
 	GetAll(ctx context.Context) ([]dto.MonitoringData, error)
-	GetAllByVehicleAndCountLte(ctx context.Context, vehicleId, count int) ([]dto.MonitoringData, error)
+	GetAllByVehicleAndCountLte(ctx context.Context, vehicleName string, count int) ([]dto.MonitoringData, error)
 }
 
 type RuntimeMonitoringStorage struct {
-	data map[int]map[int]dto.MonitoringData // map[vehicleId] ->| map[chatId] -> monitoring data |
+	data map[string]map[int64]dto.MonitoringData // map[vehicleName] ->| map[chatId] -> monitoring data |
 	mtx  sync.RWMutex
 }
 
 func NewRuntimeMonitoringStorage() *RuntimeMonitoringStorage {
 	return &RuntimeMonitoringStorage{
-		data: make(map[int]map[int]dto.MonitoringData),
+		data: make(map[string]map[int64]dto.MonitoringData),
 		mtx:  sync.RWMutex{},
 	}
 }
@@ -29,15 +29,19 @@ func (s *RuntimeMonitoringStorage) Save(_ context.Context, data dto.MonitoringDa
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	s.data[data.VehicleID][data.ChatID] = data
+	if s.data[data.VehicleName] == nil {
+		s.data[data.VehicleName] = map[int64]dto.MonitoringData{}
+	}
+
+	s.data[data.VehicleName][data.ChatID] = data
 	return nil
 }
 
-func (s *RuntimeMonitoringStorage) Remove(_ context.Context, chatId int, vehicleId int) error {
+func (s *RuntimeMonitoringStorage) Remove(_ context.Context, chatId int64, vehicleName string) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	delete(s.data[vehicleId], chatId)
+	delete(s.data[vehicleName], chatId)
 
 	return nil
 }
@@ -56,13 +60,13 @@ func (s *RuntimeMonitoringStorage) GetAll(_ context.Context) ([]dto.MonitoringDa
 	return res, nil
 }
 
-func (s *RuntimeMonitoringStorage) GetAllByVehicleAndCountLte(_ context.Context, vehicleId, count int) ([]dto.MonitoringData, error) {
+func (s *RuntimeMonitoringStorage) GetAllByVehicleAndCountLte(_ context.Context, vehicleName string, count int) ([]dto.MonitoringData, error) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
 	var res []dto.MonitoringData
 
-	for _, data := range s.data[vehicleId] {
+	for _, data := range s.data[vehicleName] {
 		if data.MinimalCount <= count {
 			res = append(res, data)
 		}
