@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 @dataclass
 class Vehicle:
+    id: int
     name: str
     nation: str
     type: str
@@ -34,7 +35,8 @@ class Poller:
 
     @staticmethod
     def parse_vehicle_data(vehicle) -> Vehicle:
-        return Vehicle(name=vehicle['entity']['user_string'],
+        return Vehicle(id=vehicle['id'],
+                       name=vehicle['entity']['user_string'],
                        nation=vehicle['entity']['nation'],
                        type=vehicle['entity']['type_slug'],
                        level=vehicle['entity']['roman_level'],
