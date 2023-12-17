@@ -66,10 +66,10 @@ func GetAddMonitoringVehicleStepHandler(flowStorage storage.AddMonitoringFlowSto
 			return err
 		}
 
-		msgId := update.CallbackQuery.Message.MessageID
-		editTextQuery := tgbotapi.NewEditMessageText(chatID, msgId,
+		msgID := update.CallbackQuery.Message.MessageID
+		editTextQuery := tgbotapi.NewEditMessageText(chatID, msgID,
 			fmt.Sprintf("You chosed %s\nEnter minimal count:\nor /cancel", flowData.Data.VehicleName))
-		editLineupQuery := tgbotapi.NewEditMessageReplyMarkup(chatID, msgId, tgbotapi.NewInlineKeyboardMarkup())
+		editLineupQuery := tgbotapi.NewEditMessageReplyMarkup(chatID, msgID, tgbotapi.NewInlineKeyboardMarkup())
 
 		_, err = bot.Send(editTextQuery)
 		if err != nil {
