@@ -211,10 +211,6 @@ func GetCancelCommandHandler(flowStorage storage.AddMonitoringFlowStorage) Handl
 		ctx := context.TODO()
 		chatID := update.Message.Chat.ID
 
-		if err := flowStorage.Remove(ctx, chatID); err != nil {
-			return err
-		}
-
-		return nil
+		return flowStorage.Remove(ctx, chatID)
 	}
 }
