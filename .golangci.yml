@@ -1,0 +1,10 @@
+linters:
+  enable:
+    - revive
+    - gosec
+    - staticcheck
+    - unused
+
+run:
+  issues-exit-code: 1
+  tests: true
