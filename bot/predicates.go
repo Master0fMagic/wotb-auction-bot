@@ -31,7 +31,7 @@ func GetSetVehicleNameFlowCallbackPredicate(flowStorage storage.AddMonitoringFlo
 
 func GetSetVehicleMinimalCountFlowPredicate(flowStorage storage.AddMonitoringFlowStorage, step dto.MonitoringStep) Predicate {
 	return func(update tgbotapi.Update) bool {
-		if update.Message == nil {
+		if update.Message == nil || update.Message.IsCommand() {
 			return false
 		}
 

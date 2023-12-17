@@ -44,13 +44,12 @@ func (b *Bot) AddHandler(predicate Predicate, handlerFunc HandlerFunc) {
 	b.msgHandlers = append(b.msgHandlers, messageHandler{handler: handlerFunc, predicate: predicate})
 }
 
-func (b *Bot) SendMessages(msgs []tgbotapi.Chattable) error {
-	for _, msg := range msgs {
-		if _, err := b.tgBot.Send(msg); err != nil {
-			// todo log error
-			return err
-		}
+func (b *Bot) Send(msg tgbotapi.Chattable) error {
+	if _, err := b.tgBot.Send(msg); err != nil {
+		// todo log error
+		return err
 	}
+
 	return nil
 }
 

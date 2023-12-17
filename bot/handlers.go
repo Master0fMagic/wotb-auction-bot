@@ -21,7 +21,7 @@ func GetStaticTextResponseHandler(response string) HandlerFunc {
 func GetAddMonitoringCommandHandler(dataProvider provider.AuctionDataProvider, flowStorage storage.AddMonitoringFlowStorage) HandlerFunc {
 	return func(update tgbotapi.Update, bot *tgbotapi.BotAPI) error {
 		ctx := context.TODO()
-		data, err := dataProvider.GetData(ctx)
+		data, err := dataProvider.GetData(ctx, true)
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,7 @@ func GetAddMonitoringVehicleStepHandler(flowStorage storage.AddMonitoringFlowSto
 
 		msgId := update.CallbackQuery.Message.MessageID
 		editTextQuery := tgbotapi.NewEditMessageText(chatId, msgId,
-			fmt.Sprintf("You chosed %s\nEnter minimal count:", flowData.Data.VehicleName))
+			fmt.Sprintf("You chosed %s\nEnter minimal count:\nor /cancel", flowData.Data.VehicleName))
 		editLineupQuery := tgbotapi.NewEditMessageReplyMarkup(chatId, msgId, tgbotapi.NewInlineKeyboardMarkup())
 
 		_, err = bot.Send(editTextQuery)
@@ -121,7 +121,7 @@ func GetAddMonitoringMinimalCountStepHandler(flowStorage storage.AddMonitoringFl
 
 func GetDataCommandHandler(dataProvider provider.AuctionDataProvider) HandlerFunc {
 	return func(update tgbotapi.Update, bot *tgbotapi.BotAPI) error {
-		data, err := dataProvider.GetData(context.TODO())
+		data, err := dataProvider.GetData(context.TODO(), false)
 		if err != nil {
 			return err
 		}
@@ -142,7 +142,7 @@ func GetDataCommandHandler(dataProvider provider.AuctionDataProvider) HandlerFun
 
 func GetDataShortCommandHandler(dataProvider provider.AuctionDataProvider) HandlerFunc {
 	return func(update tgbotapi.Update, bot *tgbotapi.BotAPI) error {
-		data, err := dataProvider.GetData(context.TODO())
+		data, err := dataProvider.GetData(context.TODO(), false)
 		if err != nil {
 			return err
 		}
@@ -183,5 +183,18 @@ func GetMonitoringCommandHandler(monitoringStorage storage.MonitoringStorage) Ha
 
 		_, err = bot.Send(response)
 		return err
+	}
+}
+
+func GetCancelCommandHandler(flowStorage storage.AddMonitoringFlowStorage) HandlerFunc {
+	return func(update tgbotapi.Update, bot *tgbotapi.BotAPI) error {
+		ctx := context.TODO()
+		chatId := update.Message.Chat.ID
+
+		if err := flowStorage.Remove(ctx, chatId); err != nil {
+			return err
+		}
+
+		return nil
 	}
 }

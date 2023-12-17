@@ -10,7 +10,7 @@ type MonitoringStorage interface {
 	Save(ctx context.Context, data dto.MonitoringData) error
 	Remove(ctx context.Context, chatId int64, vehicleName string) error
 	GetAll(ctx context.Context) ([]dto.MonitoringData, error)
-	GetAllByVehicleAndCountLte(ctx context.Context, vehicleName string, count int) ([]dto.MonitoringData, error)
+	GetAllByVehicleAndCountGte(ctx context.Context, vehicleName string, count int) ([]dto.MonitoringData, error)
 }
 
 type RuntimeMonitoringStorage struct {
@@ -60,14 +60,14 @@ func (s *RuntimeMonitoringStorage) GetAll(_ context.Context) ([]dto.MonitoringDa
 	return res, nil
 }
 
-func (s *RuntimeMonitoringStorage) GetAllByVehicleAndCountLte(_ context.Context, vehicleName string, count int) ([]dto.MonitoringData, error) {
+func (s *RuntimeMonitoringStorage) GetAllByVehicleAndCountGte(_ context.Context, vehicleName string, count int) ([]dto.MonitoringData, error) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
 	var res []dto.MonitoringData
 
 	for _, data := range s.data[vehicleName] {
-		if data.MinimalCount <= count {
+		if data.MinimalCount >= count {
 			res = append(res, data)
 		}
 	}
