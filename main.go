@@ -4,39 +4,45 @@ import (
 	"context"
 	"fmt"
 	"github.com/Master0fMagic/wotb-auction-bot/bot"
+	"github.com/Master0fMagic/wotb-auction-bot/config"
 	"github.com/Master0fMagic/wotb-auction-bot/dto"
 	"github.com/Master0fMagic/wotb-auction-bot/provider"
 	"github.com/Master0fMagic/wotb-auction-bot/storage"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	_ "github.com/mattn/go-sqlite3"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 )
 
-const botToken = ""
-
-const apiUrl = "https://eu.wotblitz.com/en/api/events/items/auction/?page_size=80&type[]=vehicle&saleable=true"
-
 func main() {
+	cfg, err := config.Parse()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	lvl, err := initLogger(cfg.LogLevel)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Kill, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
 	errorGroup, ctx := errgroup.WithContext(ctx)
 
-	monitoringStorage, err := storage.NewSQLiteMonitoringStorage("./wotb.db") // todo move to config
+	monitoringStorage, err := storage.NewSQLiteMonitoringStorage(cfg.DbPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	flowStorage := storage.NewRuntimeAddMonitoringFlowStorage()
-	actionProvider := provider.NewCachedAuctionDataProvider(provider.NewHttpActionProvider(apiUrl),
-		time.Minute*1) // todo move to config
+	actionProvider := provider.NewCachedAuctionDataProvider(provider.NewHttpActionProvider(cfg.AuctionAPI), cfg.AuctionCacheLifetime)
 
-	tgBot, err := bot.New(botToken) // todo move to cfg
+	tgBot, err := bot.New(cfg.BotToken, lvl)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,9 +52,11 @@ func main() {
 		return tgBot.Run(ctx)
 	})
 	errorGroup.Go(func() error {
-		return run_vehicles_checks(ctx, actionProvider, monitoringStorage, tgBot, time.Second*10) // todo move to config
+		return run_vehicles_checks(ctx, actionProvider, monitoringStorage, tgBot, cfg.AuctionCacheLifetime)
 	})
-
+	errorGroup.Go(func() error {
+		return actionProvider.Run(ctx)
+	})
 	errorGroup.Wait()
 }
 
@@ -81,10 +89,23 @@ func run_vehicles_checks(ctx context.Context, dataProvider provider.AuctionDataP
 					if err := bot.Send(photo); err != nil {
 						return err
 					}
+					if err := monitoringStorage.Remove(ctx, u.ChatID, v.Name); err != nil {
+						return err
+					}
 				}
 			}
 		}
 	}
+}
+
+func initLogger(logLevel string) (log.Level, error) {
+	lvl, err := log.ParseLevel(logLevel)
+	if err != nil {
+		return lvl, err
+	}
+	log.SetLevel(lvl)
+
+	return lvl, nil
 }
 
 func initBot(monitoringStorage storage.MonitoringStorage,
@@ -101,6 +122,10 @@ func initBot(monitoringStorage storage.MonitoringStorage,
 	tgBot.AddHandler(
 		bot.GetCommandNamePredicate("data_short"),
 		bot.GetDataShortCommandHandler(dataProvider),
+	)
+	tgBot.AddHandler(
+		bot.GetCommandNamePredicate("all_data_short"),
+		bot.GetAllDataShortCommandHandler(dataProvider),
 	)
 	tgBot.AddHandler(
 		bot.GetCommandNamePredicate("add_monitoring"),

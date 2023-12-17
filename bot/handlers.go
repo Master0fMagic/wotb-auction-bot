@@ -121,7 +121,7 @@ func GetAddMonitoringMinimalCountStepHandler(flowStorage storage.AddMonitoringFl
 
 func GetDataCommandHandler(dataProvider provider.AuctionDataProvider) HandlerFunc {
 	return func(update tgbotapi.Update, bot *tgbotapi.BotAPI) error {
-		data, err := dataProvider.GetData(context.TODO(), false)
+		data, err := dataProvider.GetData(context.TODO(), true)
 		if err != nil {
 			return err
 		}
@@ -141,6 +141,26 @@ func GetDataCommandHandler(dataProvider provider.AuctionDataProvider) HandlerFun
 }
 
 func GetDataShortCommandHandler(dataProvider provider.AuctionDataProvider) HandlerFunc {
+	return func(update tgbotapi.Update, bot *tgbotapi.BotAPI) error {
+		data, err := dataProvider.GetData(context.TODO(), true)
+		if err != nil {
+			return err
+		}
+
+		var stringData []string
+		for _, v := range data {
+			stringData = append(stringData, v.String())
+		}
+
+		response := tgbotapi.NewMessage(update.Message.Chat.ID,
+			strings.Join(stringData, "\n\n"))
+
+		_, err = bot.Send(response)
+		return err
+	}
+}
+
+func GetAllDataShortCommandHandler(dataProvider provider.AuctionDataProvider) HandlerFunc {
 	return func(update tgbotapi.Update, bot *tgbotapi.BotAPI) error {
 		data, err := dataProvider.GetData(context.TODO(), false)
 		if err != nil {

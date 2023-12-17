@@ -3,7 +3,7 @@ package bot
 import (
 	"context"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"sync"
 )
 
@@ -23,12 +23,14 @@ type Bot struct {
 	msgHandlers []messageHandler
 }
 
-func New(token string) (*Bot, error) {
+func New(token string, logLevel log.Level) (*Bot, error) {
 	tgBot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		log.Fatal(err)
 	}
-	tgBot.Debug = true
+	if logLevel >= log.DebugLevel {
+		tgBot.Debug = true
+	}
 
 	return &Bot{
 		tgBot:       tgBot,
