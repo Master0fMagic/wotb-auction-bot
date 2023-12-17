@@ -14,15 +14,15 @@ type AuctionDataProvider interface {
 	GetData(ctx context.Context, onlyAvailable bool) ([]dto.VehicleInfo, error)
 }
 
-type HttpAuctionProvider struct {
+type HTTPAuctionProvider struct {
 	url string
 }
 
-func NewHttpActionProvider(url string) *HttpAuctionProvider {
-	return &HttpAuctionProvider{url: url}
+func NewHTTPActionProvider(url string) *HTTPAuctionProvider {
+	return &HTTPAuctionProvider{url: url}
 }
 
-func (p *HttpAuctionProvider) GetData(_ context.Context, onlyAvailable bool) ([]dto.VehicleInfo, error) {
+func (p *HTTPAuctionProvider) GetData(_ context.Context, onlyAvailable bool) ([]dto.VehicleInfo, error) {
 	resp, err := http.Get(p.url)
 	if err != nil {
 		return nil, err

@@ -9,13 +9,13 @@ import (
 
 type MonitoringStorage interface {
 	Save(ctx context.Context, data dto.MonitoringData) error
-	Remove(ctx context.Context, chatId int64, vehicleName string) error
+	Remove(ctx context.Context, chatID int64, vehicleName string) error
 	GetAll(ctx context.Context) ([]dto.MonitoringData, error)
 	GetAllByVehicleAndCountGte(ctx context.Context, vehicleName string, count int) ([]dto.MonitoringData, error)
 }
 
 type RuntimeMonitoringStorage struct {
-	data map[string]map[int64]dto.MonitoringData // map[vehicleName] ->| map[chatId] -> monitoring data |
+	data map[string]map[int64]dto.MonitoringData // map[vehicleName] ->| map[chatID] -> monitoring data |
 	mtx  sync.RWMutex
 }
 
@@ -38,11 +38,11 @@ func (s *RuntimeMonitoringStorage) Save(_ context.Context, data dto.MonitoringDa
 	return nil
 }
 
-func (s *RuntimeMonitoringStorage) Remove(_ context.Context, chatId int64, vehicleName string) error {
+func (s *RuntimeMonitoringStorage) Remove(_ context.Context, chatID int64, vehicleName string) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	delete(s.data[vehicleName], chatId)
+	delete(s.data[vehicleName], chatID)
 
 	return nil
 }

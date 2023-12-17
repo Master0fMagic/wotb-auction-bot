@@ -53,9 +53,9 @@ func GetAddMonitoringCommandHandler(dataProvider provider.AuctionDataProvider, f
 func GetAddMonitoringVehicleStepHandler(flowStorage storage.AddMonitoringFlowStorage) HandlerFunc {
 	return func(update tgbotapi.Update, bot *tgbotapi.BotAPI) error {
 		ctx := context.TODO()
-		chatId := update.CallbackQuery.Message.Chat.ID
+		chatID := update.CallbackQuery.Message.Chat.ID
 
-		flowData, err := flowStorage.Get(ctx, chatId)
+		flowData, err := flowStorage.Get(ctx, chatID)
 		if err != nil {
 			return err
 		}
@@ -67,9 +67,9 @@ func GetAddMonitoringVehicleStepHandler(flowStorage storage.AddMonitoringFlowSto
 		}
 
 		msgId := update.CallbackQuery.Message.MessageID
-		editTextQuery := tgbotapi.NewEditMessageText(chatId, msgId,
+		editTextQuery := tgbotapi.NewEditMessageText(chatID, msgId,
 			fmt.Sprintf("You chosed %s\nEnter minimal count:\nor /cancel", flowData.Data.VehicleName))
-		editLineupQuery := tgbotapi.NewEditMessageReplyMarkup(chatId, msgId, tgbotapi.NewInlineKeyboardMarkup())
+		editLineupQuery := tgbotapi.NewEditMessageReplyMarkup(chatID, msgId, tgbotapi.NewInlineKeyboardMarkup())
 
 		_, err = bot.Send(editTextQuery)
 		if err != nil {
@@ -89,28 +89,28 @@ func GetAddMonitoringMinimalCountStepHandler(flowStorage storage.AddMonitoringFl
 	monitoringStorage storage.MonitoringStorage) HandlerFunc {
 	return func(update tgbotapi.Update, bot *tgbotapi.BotAPI) error {
 		ctx := context.TODO()
-		chatId := update.Message.Chat.ID
+		chatID := update.Message.Chat.ID
 
-		flowData, err := flowStorage.Get(ctx, chatId)
+		flowData, err := flowStorage.Get(ctx, chatID)
 		if err != nil {
 			return err
 		}
 		minimalCount, err := strconv.Atoi(update.Message.Text)
 		if err != nil {
-			msg := tgbotapi.NewMessage(chatId, "You have entered invalid value. Please enter integer number")
+			msg := tgbotapi.NewMessage(chatID, "You have entered invalid value. Please enter integer number")
 			_, err := bot.Send(msg)
 			return err
 		}
 
 		flowData.Data.MinimalCount = minimalCount
-		if err := flowStorage.Remove(ctx, chatId); err != nil {
+		if err := flowStorage.Remove(ctx, chatID); err != nil {
 			return err
 		}
 		if err := monitoringStorage.Save(ctx, flowData.Data); err != nil {
 			return err
 		}
 
-		msg := tgbotapi.NewMessage(chatId, fmt.Sprintf("Monitoring for %s and %d count saved!",
+		msg := tgbotapi.NewMessage(chatID, fmt.Sprintf("Monitoring for %s and %d count saved!",
 			flowData.Data.VehicleName,
 			flowData.Data.MinimalCount))
 
@@ -193,7 +193,7 @@ func GetMonitoringCommandHandler(monitoringStorage storage.MonitoringStorage) Ha
 		} else {
 			var stringData []string
 			for _, v := range data {
-				stringData = append(stringData, fmt.Sprintf("vehicle: %s, chatId: %d, minCount: %d",
+				stringData = append(stringData, fmt.Sprintf("vehicle: %s, chatID: %d, minCount: %d",
 					v.VehicleName, v.ChatID, v.MinimalCount))
 			}
 			responseData = strings.Join(stringData, "\n\n")
@@ -209,9 +209,9 @@ func GetMonitoringCommandHandler(monitoringStorage storage.MonitoringStorage) Ha
 func GetCancelCommandHandler(flowStorage storage.AddMonitoringFlowStorage) HandlerFunc {
 	return func(update tgbotapi.Update, bot *tgbotapi.BotAPI) error {
 		ctx := context.TODO()
-		chatId := update.Message.Chat.ID
+		chatID := update.Message.Chat.ID
 
-		if err := flowStorage.Remove(ctx, chatId); err != nil {
+		if err := flowStorage.Remove(ctx, chatID); err != nil {
 			return err
 		}
 

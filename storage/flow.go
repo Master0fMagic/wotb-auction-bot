@@ -9,13 +9,13 @@ import (
 
 type AddMonitoringFlowStorage interface {
 	Set(ctx context.Context, data dto.AddMonitoringStep) error
-	Get(ctx context.Context, chatId int64) (*dto.AddMonitoringStep, error)
-	Remove(ctx context.Context, chatId int64) error
+	Get(ctx context.Context, chatID int64) (*dto.AddMonitoringStep, error)
+	Remove(ctx context.Context, chatID int64) error
 }
 
 type RuntimeAddMonitoringFlowStorage struct {
 	mtx  sync.RWMutex
-	data map[int64]dto.AddMonitoringStep // chatId -> data
+	data map[int64]dto.AddMonitoringStep // chatID -> data
 }
 
 func NewRuntimeAddMonitoringFlowStorage() *RuntimeAddMonitoringFlowStorage {
@@ -33,21 +33,21 @@ func (s *RuntimeAddMonitoringFlowStorage) Set(_ context.Context, data dto.AddMon
 	return nil
 }
 
-func (s *RuntimeAddMonitoringFlowStorage) Get(_ context.Context, chatId int64) (*dto.AddMonitoringStep, error) {
+func (s *RuntimeAddMonitoringFlowStorage) Get(_ context.Context, chatID int64) (*dto.AddMonitoringStep, error) {
 	s.mtx.RLock()
 	defer s.mtx.RUnlock()
 
-	data, ok := s.data[chatId]
+	data, ok := s.data[chatID]
 	if !ok {
 		return nil, errors.New("step not found")
 	}
 	return &data, nil
 }
 
-func (s *RuntimeAddMonitoringFlowStorage) Remove(_ context.Context, chatId int64) error {
+func (s *RuntimeAddMonitoringFlowStorage) Remove(_ context.Context, chatID int64) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	delete(s.data, chatId)
+	delete(s.data, chatID)
 	return nil
 }

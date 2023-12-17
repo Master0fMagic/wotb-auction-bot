@@ -40,7 +40,7 @@ func main() {
 	}
 
 	flowStorage := storage.NewRuntimeAddMonitoringFlowStorage()
-	actionProvider := provider.NewCachedAuctionDataProvider(provider.NewHttpActionProvider(cfg.AuctionAPI), cfg.AuctionCacheLifetime)
+	actionProvider := provider.NewCachedAuctionDataProvider(provider.NewHTTPActionProvider(cfg.AuctionAPI), cfg.AuctionCacheLifetime)
 
 	tgBot, err := bot.New(cfg.BotToken, lvl)
 	if err != nil {
@@ -52,15 +52,17 @@ func main() {
 		return tgBot.Run(ctx)
 	})
 	errorGroup.Go(func() error {
-		return run_vehicles_checks(ctx, actionProvider, monitoringStorage, tgBot, cfg.AuctionCacheLifetime)
+		return runVehiclesChecks(ctx, actionProvider, monitoringStorage, tgBot, cfg.AuctionCacheLifetime)
 	})
 	errorGroup.Go(func() error {
 		return actionProvider.Run(ctx)
 	})
-	errorGroup.Wait()
+	if err := errorGroup.Wait(); err != nil {
+		log.WithError(err).Error("error awaiting error group")
+	}
 }
 
-func run_vehicles_checks(ctx context.Context, dataProvider provider.AuctionDataProvider,
+func runVehiclesChecks(ctx context.Context, dataProvider provider.AuctionDataProvider,
 	monitoringStorage storage.MonitoringStorage,
 	bot *bot.Bot, interval time.Duration) error {
 	ticker := time.NewTicker(interval)
