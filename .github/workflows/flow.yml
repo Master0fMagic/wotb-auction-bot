@@ -31,11 +31,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Docker login
         env:
           DOCKER_USER: ${{secrets.DOCKER_USERNAME}}
           DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
-
-      - name: Docker login
         run: |
           docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
 
