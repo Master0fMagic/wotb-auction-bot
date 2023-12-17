@@ -7,4 +7,7 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 )
 
-require github.com/technoweenie/multipartstreamer v1.0.1 // indirect
+require (
+	github.com/mattn/go-sqlite3 v1.14.19 // indirect
+	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
+)

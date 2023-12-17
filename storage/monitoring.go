@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"github.com/Master0fMagic/wotb-auction-bot/dto"
 	"sync"
 )
@@ -73,4 +74,70 @@ func (s *RuntimeMonitoringStorage) GetAllByVehicleAndCountGte(_ context.Context,
 	}
 
 	return res, nil
+}
+
+type SQLiteMonitoringStorage struct {
+	db *sql.DB
+}
+
+func NewSQLiteMonitoringStorage(dbPath string) (*SQLiteMonitoringStorage, error) {
+	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = db.Exec(createTableQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SQLiteMonitoringStorage{db: db}, nil
+}
+
+func (s *SQLiteMonitoringStorage) Save(ctx context.Context, data dto.MonitoringData) error {
+	_, err := s.db.ExecContext(ctx, insertDataQuery, data.VehicleName, data.ChatID, data.MinimalCount)
+	return err
+}
+
+func (s *SQLiteMonitoringStorage) Remove(ctx context.Context, chatID int64, vehicleName string) error {
+	_, err := s.db.ExecContext(ctx, removeDataQuery, vehicleName, chatID)
+	return err
+}
+
+func (s *SQLiteMonitoringStorage) GetAll(ctx context.Context) ([]dto.MonitoringData, error) {
+	rows, err := s.db.QueryContext(ctx, getAllQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []dto.MonitoringData
+	for rows.Next() {
+		var data dto.MonitoringData
+		if err := rows.Scan(&data.VehicleName, &data.ChatID, &data.MinimalCount); err != nil {
+			return nil, err
+		}
+		result = append(result, data)
+	}
+
+	return result, nil
+}
+
+func (s *SQLiteMonitoringStorage) GetAllByVehicleAndCountGte(ctx context.Context, vehicleName string, count int) ([]dto.MonitoringData, error) {
+	rows, err := s.db.QueryContext(ctx, getAllByVehicleAndCountGteQuery, vehicleName, count)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []dto.MonitoringData
+	for rows.Next() {
+		var data dto.MonitoringData
+		if err := rows.Scan(&data.VehicleName, &data.ChatID, &data.MinimalCount); err != nil {
+			return nil, err
+		}
+		result = append(result, data)
+	}
+
+	return result, nil
 }

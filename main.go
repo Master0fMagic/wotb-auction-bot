@@ -8,6 +8,7 @@ import (
 	"github.com/Master0fMagic/wotb-auction-bot/provider"
 	"github.com/Master0fMagic/wotb-auction-bot/storage"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/sync/errgroup"
 	"log"
 	"os"
@@ -26,10 +27,14 @@ func main() {
 
 	errorGroup, ctx := errgroup.WithContext(ctx)
 
-	monitoringStorage := storage.NewRuntimeMonitoringStorage()
+	monitoringStorage, err := storage.NewSQLiteMonitoringStorage("./wotb.db") // todo move to config
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	flowStorage := storage.NewRuntimeAddMonitoringFlowStorage()
 	actionProvider := provider.NewCachedAuctionDataProvider(provider.NewHttpActionProvider(apiUrl),
-		time.Minute*10) // todo move to config
+		time.Minute*1) // todo move to config
 
 	tgBot, err := bot.New(botToken) // todo move to cfg
 	if err != nil {
