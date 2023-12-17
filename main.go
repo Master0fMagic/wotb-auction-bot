@@ -21,12 +21,12 @@ import (
 func main() {
 	cfg, err := config.Parse()
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal("error parsing config")
 	}
 
 	lvl, err := initLogger(cfg.LogLevel)
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal("error config logger")
 	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Kill, os.Interrupt, syscall.SIGTERM)
@@ -36,7 +36,7 @@ func main() {
 
 	monitoringStorage, err := storage.NewSQLiteMonitoringStorage(cfg.DbPath)
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal("error initializing monitoring storage")
 	}
 
 	flowStorage := storage.NewRuntimeAddMonitoringFlowStorage()
@@ -44,7 +44,7 @@ func main() {
 
 	tgBot, err := bot.New(cfg.BotToken, lvl)
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Error("error initializing tg bot")
 	}
 
 	initBot(monitoringStorage, flowStorage, actionProvider, tgBot)

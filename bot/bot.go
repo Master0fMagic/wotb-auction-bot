@@ -69,7 +69,7 @@ func (b *Bot) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			// todo add log for canceling via ctx
+			log.Warn("bot processing cancelled via ctx...")
 			return nil
 		case update := <-updates:
 			b.mtx.RLock()
@@ -80,7 +80,7 @@ func (b *Bot) Run(ctx context.Context) error {
 
 				err := handler.handler(update, b.tgBot)
 				if err != nil {
-					// todo log with error
+					log.WithError(err).Error("error handling message")
 				}
 				break
 			}

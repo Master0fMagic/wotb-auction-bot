@@ -1,0 +1,47 @@
+on:
+  push:
+    branches: [ master, develop/go ]
+  pull_request:
+    branches: [ master, develop/go ]
+
+jobs:
+  lint:
+    runs-on: alpine-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Check lint
+        run: sudo make check-lint
+
+      - name: Lint
+        run: make lint
+
+  build:
+    runs-on: alpine-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        env:
+          DOCKER_USER: ${{secrets.DOCKER_USERNAME}}
+          DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+          run: |
+            docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Build the Docker image
+        run: docker build . -t ${{ vars.DOCKER_NAMESPACE }}/${{ vars.DOCKER_REPO }}:${{ github.sha }}
+
+      - name: Docker Push
+        run: docker push ${{ vars.DOCKER_NAMESPACE }}/${{ vars.DOCKER_REPO }}:${{ github.sha }}
