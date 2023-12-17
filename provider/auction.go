@@ -11,7 +11,7 @@ import (
 )
 
 type AuctionDataProvider interface {
-	GetData(ctx context.Context, skipSold bool) ([]dto.VehicleInfo, error)
+	GetData(ctx context.Context, onlyAvailable bool) ([]dto.VehicleInfo, error)
 }
 
 type HttpAuctionProvider struct {
@@ -22,7 +22,7 @@ func NewHttpActionProvider(url string) *HttpAuctionProvider {
 	return &HttpAuctionProvider{url: url}
 }
 
-func (p *HttpAuctionProvider) GetData(_ context.Context, skipSold bool) ([]dto.VehicleInfo, error) {
+func (p *HttpAuctionProvider) GetData(_ context.Context, onlyAvailable bool) ([]dto.VehicleInfo, error) {
 	resp, err := http.Get(p.url)
 	if err != nil {
 		return nil, err
@@ -43,10 +43,10 @@ func (p *HttpAuctionProvider) GetData(_ context.Context, skipSold bool) ([]dto.V
 
 	var res []dto.VehicleInfo
 	for _, ent := range response.Results {
-		if !ent.Available {
+		if !ent.Display {
 			continue
 		}
-		if skipSold && ent.CurrentCount == 0 {
+		if onlyAvailable && (ent.CurrentCount == 0 || !ent.Available) {
 			continue
 		}
 		res = append(res, dto.MapResultToVehicleInfo(ent))
@@ -86,7 +86,7 @@ func (p *CachedAuctionDataProvider) Run(ctx context.Context) error {
 	}
 }
 
-func (p *CachedAuctionDataProvider) GetData(ctx context.Context, skipSold bool) ([]dto.VehicleInfo, error) {
+func (p *CachedAuctionDataProvider) GetData(ctx context.Context, onlyAvailable bool) ([]dto.VehicleInfo, error) {
 	p.mtx.Lock()
 	defer p.mtx.Unlock()
 
@@ -100,7 +100,7 @@ func (p *CachedAuctionDataProvider) GetData(ctx context.Context, skipSold bool) 
 
 	var res []dto.VehicleInfo
 	for _, v := range p.data {
-		if skipSold && v.CurrentCount == 0 {
+		if onlyAvailable && (v.CurrentCount == 0 || !v.Available) {
 			continue
 		}
 		res = append(res, v)
