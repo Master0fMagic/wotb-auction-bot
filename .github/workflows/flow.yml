@@ -26,6 +26,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: lint
+    environment: non-commercial-deploy
 
     steps:
       - name: Checkout code
