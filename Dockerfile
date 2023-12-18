@@ -1,12 +1,14 @@
 FROM golang:1.21-alpine
 
+RUN apk add --no-cache make
+
 WORKDIR /go/src/app
 
 COPY . .
 
 RUN go mod download
 
-RUN go build -o /bin/wotb-auction-bot .
+RUN make build
 
 WORKDIR /bin
 

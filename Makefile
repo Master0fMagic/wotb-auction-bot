@@ -12,7 +12,7 @@ lint: dep check-lint
 	 $(GOLINT) run --timeout 1h -c .golangci.yml
 
 build: dep
-	CGO_ENABLED=1  go build -v -o build/bin/wotb-auction-bot  ./
+	CGO_ENABLED=1  go build -v -o /bin/wotb-auction-bot  ./
 	@echo "Done building."
 
 build-docker:
