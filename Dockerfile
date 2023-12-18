@@ -1,12 +1,10 @@
 FROM golang:1.21-alpine
 
-RUN apk add --no-cache make
+RUN apk add --no-cache git make gcc g++ musl-dev linux-headers gmp-dev mpfr-dev
 
 WORKDIR /go/src/app
 
 COPY . .
-
-RUN go mod download
 
 RUN make build
 
